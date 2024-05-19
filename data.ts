@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export const DATA = [
   "The quick brown fox jumps over the lazy dog.",
   "She sells seashells by the seashore.",

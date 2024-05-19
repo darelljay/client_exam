@@ -1,14 +1,15 @@
+/* eslint-disable prettier/prettier */
 import React, {useCallback, useState} from 'react';
 
 import styled from 'styled-components/native';
 
 import {
-  Button,
+  // Button,
   FlatList,
   SafeAreaView,
-  Text,
-  TouchableOpacity,
-  View,
+  // Text,
+  // TouchableOpacity,
+  // View,
 } from 'react-native';
 import {DATA} from './data';
 

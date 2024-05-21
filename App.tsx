@@ -1,62 +1,72 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable prettier/prettier */
 /* eslint-disable space-infix-ops */
 /* eslint-disable no-trailing-spaces */
 /* eslint-disable radix */
 /* eslint-disable prettier/prettier */
-import React, {useCallback, useEffect, useState} from 'react';
+
+import React, {useCallback, useEffect, useState, useRef} from 'react';
 
 import styled from 'styled-components/native';
 
 import {
-  // Button,
+  Animated,
   FlatList,
   SafeAreaView,
-  // Text,
-  // TouchableOpacity,
-  // View,
 } from 'react-native';
 import {DATA} from './data';
 
 function App(): React.JSX.Element {
   const [searchText, setSearchText] = useState('');
-  const [currentPage,setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [maxPage, setMaxPage] = useState(0);
-  const [currentList,setCurrentList] =  useState<string[]>([]);
-  // 과제 1
-  // 검색어를 입력했을 떄 매칭되는 문자들을 보여줘야함
-  // 생각나는 로직: 배열안에 입력하는 텍스트가 있는지에 여부로 필터링후 아예 빼서 로컬 스토리지에 담기 
+  const [currentList, setCurrentList] = useState<string[]>([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current; 
 
-  const filterItem = useCallback(()=>{
+  const filterTextItem = useCallback((text: string) => {
+      
+  }, []);
+
+  const filterItem = useCallback(() => {
     const list = [];
     const datalength = DATA.length;
 
-    for(let i=0; i<datalength/10; i++){
+    for (let i = 0; i < datalength / 10; i++) {
       let tempArr: any[] = [];
-      for(let j=0; j<=9; j++){
+      for (let j = 0; j <= 9; j++) {
         let mixStr = `${i}${j}`;
-        if(DATA[parseInt(mixStr)] === ''){
+        if (DATA[parseInt(mixStr)] === '') {
           list.push(tempArr);
           break;
-        } 
-          
+        }
         tempArr.push(DATA[parseInt(mixStr)]);
       }
       list.push(tempArr);
     }
     return list;
-  },[]); 
-  
+  }, []);
+
   useEffect(() => {
     const pages = filterItem();
     setMaxPage(pages.length);
     setCurrentList(pages[currentPage] || []);
-  }, [filterItem,currentPage]);
+    fadeIn();
+  }, [filterItem, currentPage]);
 
+  const fadeIn = () => {
+    fadeAnim.setValue(0); 
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 700, 
+      useNativeDriver: true,
+    }).start();
+  };
 
-  const handleNextPage = (currentPage: number) => {
+  const handleNextPage = () => {
     setCurrentPage((prev) => (prev < maxPage - 1 ? prev + 1 : prev));
   };
 
-  const handlePrevPage = (currentPage: number) => {
+  const handlePrevPage = () => {
     setCurrentPage((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
@@ -67,6 +77,7 @@ function App(): React.JSX.Element {
       </SpeechBubbleView>
     );
   }, []);
+
   return (
     <SafeAreaView>
       <Container>
@@ -77,14 +88,14 @@ function App(): React.JSX.Element {
             placeholder="검색어를 입력하세요"
           />
           <SearchHelperView>
-            <SearchHelperButton title="이전" onPress={() => {handlePrevPage(currentPage)}} />
-            <SearchHelperText >{currentPage + 1} / {maxPage}</SearchHelperText>
-            <SearchHelperButton title="다음" onPress={() => {handleNextPage(currentPage)}} />
+            <SearchHelperButton title="이전" onPress={handlePrevPage} />
+            <SearchHelperText>{currentPage + 1} / {maxPage}</SearchHelperText>
+            <SearchHelperButton title="다음" onPress={handleNextPage} />
           </SearchHelperView>
         </SearchView>
-        <ContentView>
+        <AnimatedContentView style={{opacity: fadeAnim}}>
           <FlatList data={currentList} renderItem={renderItem} />
-        </ContentView>
+        </AnimatedContentView>
       </Container>
     </SafeAreaView>
   );
@@ -102,8 +113,7 @@ const SearchView = styled.View`
   border-color: #dee2e6;
 `;
 
-const ContentView = styled.View`
-  transition: 2.8s ease;
+const AnimatedContentView = styled(Animated.View)`
   padding: 10px;
 `;
 

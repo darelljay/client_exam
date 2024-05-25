@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable prettier/prettier */
 /* eslint-disable space-infix-ops */
@@ -24,7 +25,12 @@ function App(): React.JSX.Element {
   const fadeAnim = useRef(new Animated.Value(0)).current; 
 
   const filterTextItem = useCallback((text: string) => {
-      
+    if (text === "") {
+      return currentList;
+    } else {
+      const newArr = DATA.filter((data) => data.includes(text));
+      return newArr;
+    }
   }, []);
 
   const filterItem = useCallback(() => {
@@ -52,6 +58,11 @@ function App(): React.JSX.Element {
     setCurrentList(pages[currentPage] || []);
     fadeIn();
   }, [filterItem, currentPage]);
+
+  useEffect(() => {
+    const filteredList = filterTextItem(searchText);
+    setCurrentList(filteredList);
+  }, [searchText]);
 
   const fadeIn = () => {
     fadeAnim.setValue(0); 

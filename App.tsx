@@ -1,105 +1,83 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable prettier/prettier */
-/* eslint-disable space-infix-ops */
-/* eslint-disable no-trailing-spaces */
-/* eslint-disable radix */
-/* eslint-disable prettier/prettier */
-
-import React, {useCallback, useEffect, useState, useRef} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import styled from 'styled-components/native';
 
 import {
-  Animated,
+  Button,
   FlatList,
   SafeAreaView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {DATA} from './data';
 
 function App(): React.JSX.Element {
   const [searchText, setSearchText] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [maxPage, setMaxPage] = useState(0);
-  const [currentList, setCurrentList] = useState<string[]>([]);
-  const fadeAnim = useRef(new Animated.Value(0)).current; 
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [maxIndex, setMaxIndex] = useState(0);
+  const [foundList, setFoundList] = useState<number[]>([]);
+  const flatListRef = useRef<FlatList<string>>(null);
 
-
- const filterTextItem = useCallback((text: string) => {
-    if (text.replaceAll(' ','') === '') {
-       const newList = filterItem();
-       return newList[currentPage];
-    } else {
-      const newArr = DATA.filter((data) => data.includes(text));
-      return newArr;
-    }
-  }, []);
-
-  
-
-  const filterItem = useCallback(() => {
-    const list = [];
-    const datalength = DATA.length;
-
-    for (let i = 0; i < datalength / 10; i++) {
-      let tempArr: any[] = [];
-      for (let j = 0; j <= 9; j++) {
-        let mixStr = `${i}${j}`;
-        if (DATA[parseInt(mixStr)] === '') {
-          list.push(tempArr);
-          break;
+  const findItemIdx = useCallback((text: string) => {
+    if (text.trim() !== '') {
+      let newDataIdx: number[] = [];
+      DATA.forEach((element, index) => {
+        if (element.includes(text)) {
+          newDataIdx.push(index);
         }
-        tempArr.push(DATA[parseInt(mixStr)]);
-      } 
-      list.push(tempArr);
+      });
+      return newDataIdx;
     }
-    return list;
+    return [];
   }, []);
 
   useEffect(() => {
-    const filteredList = filterItem();
-    setCurrentList(filteredList[0] || []);
-    fadeIn();
-  }, []);
-
-  
-  useEffect(() => {
-    const pages = filterItem();
-    setMaxPage(pages.length);
-    setCurrentList(pages[currentPage] || []);
-    fadeIn();
-  }, [filterItem, currentPage]);
+    const filteredIndices = findItemIdx(searchText);
+    setFoundList(filteredIndices);
+    setMaxIndex(filteredIndices.length);
+  }, [findItemIdx, searchText]);
 
   useEffect(() => {
-    const filteredList = filterTextItem(searchText);
-    setCurrentList(filteredList);
-  }, [searchText]);
+    if (foundList.length > 0) {
+      scrollToIndex(foundList[0]);
+    }
+  }, [foundList]);
 
-  const fadeIn = () => {
-    fadeAnim.setValue(0); 
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 700, 
-      useNativeDriver: true,
-    }).start();
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [maxIndex]);
+
+  const handleNextBtn = () => {
+    if (currentIndex < maxIndex) {
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      scrollToIndex(foundList[nextIndex]);
+    }
   };
 
-  const handleNextPage = () => {
-    setCurrentPage((prev) => (prev < maxPage - 1 ? prev + 1 : prev));
+  const handlePrevBtn = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
+      scrollToIndex(foundList[prevIndex]);
+    }
   };
 
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => (prev > 0 ? prev - 1 : prev));
+  const scrollToIndex = (index: number) => {
+    flatListRef.current?.scrollToIndex({ index, animated: true });
   };
 
-  const renderItem = useCallback(({item}: {item: string}) => {
+  const renderItem = useCallback(({ item }: { item: string }) => {
     return (
       <SpeechBubbleView>
         <SpeechBubbleText>{item}</SpeechBubbleText>
       </SpeechBubbleView>
     );
   }, []);
-    console.log(currentList);
+
   return (
     <SafeAreaView>
       <Container>
@@ -110,14 +88,19 @@ function App(): React.JSX.Element {
             placeholder="검색어를 입력하세요"
           />
           <SearchHelperView>
-            <SearchHelperButton title="이전" onPress={handlePrevPage} />
-            <SearchHelperText>{currentPage + 1} / {maxPage}</SearchHelperText>
-            <SearchHelperButton title="다음" onPress={handleNextPage} />
+            <SearchHelperButton title="이전" onPress={handlePrevBtn} />
+            <SearchHelperText>{currentIndex} / {maxIndex}</SearchHelperText>
+            <SearchHelperButton title="다음" onPress={handleNextBtn} />
           </SearchHelperView>
         </SearchView>
-        <AnimatedContentView style={{opacity: fadeAnim}}>
-          <FlatList data={currentList} renderItem={renderItem} />
-        </AnimatedContentView>
+        <ContentView>
+          <FlatList
+            ref={flatListRef}
+            data={DATA}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+          />
+        </ContentView>
       </Container>
     </SafeAreaView>
   );
@@ -135,7 +118,7 @@ const SearchView = styled.View`
   border-color: #dee2e6;
 `;
 
-const AnimatedContentView = styled(Animated.View)`
+const ContentView = styled.View`
   padding: 10px;
 `;
 
@@ -163,7 +146,7 @@ const SearchHelperView = styled.View`
   margin-top: 10px;
 `;
 
-const SearchHelperButton = styled.Button``;
+const SearchHelperButton = styled(Button)``;
 
 const SearchHelperText = styled.Text`
   font-size: 16px;

@@ -24,14 +24,18 @@ function App(): React.JSX.Element {
   const [currentList, setCurrentList] = useState<string[]>([]);
   const fadeAnim = useRef(new Animated.Value(0)).current; 
 
-  const filterTextItem = useCallback((text: string) => {
-    if (text === "") {
-      return currentList;
+
+ const filterTextItem = useCallback((text: string) => {
+    if (text.replaceAll(' ','') === '') {
+       const newList = filterItem();
+       return newList[currentPage];
     } else {
       const newArr = DATA.filter((data) => data.includes(text));
       return newArr;
     }
   }, []);
+
+  
 
   const filterItem = useCallback(() => {
     const list = [];
@@ -46,12 +50,19 @@ function App(): React.JSX.Element {
           break;
         }
         tempArr.push(DATA[parseInt(mixStr)]);
-      }
+      } 
       list.push(tempArr);
     }
     return list;
   }, []);
 
+  useEffect(() => {
+    const filteredList = filterItem();
+    setCurrentList(filteredList[0] || []);
+    fadeIn();
+  }, []);
+
+  
   useEffect(() => {
     const pages = filterItem();
     setMaxPage(pages.length);
@@ -88,7 +99,7 @@ function App(): React.JSX.Element {
       </SpeechBubbleView>
     );
   }, []);
-
+    console.log(currentList);
   return (
     <SafeAreaView>
       <Container>

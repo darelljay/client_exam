@@ -51,7 +51,7 @@ function App(): React.JSX.Element {
   }, [maxIndex]);
 
   const handleNextBtn = () => {
-    if (currentIndex < maxIndex) {
+    if (currentIndex < maxIndex - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       scrollToIndex(foundList[nextIndex]);
@@ -78,6 +78,17 @@ function App(): React.JSX.Element {
     );
   }, []);
 
+  const getItemLayout = (data: string[] | null | undefined, index: number) => (
+    { length: 60, offset: 60 * index, index }
+  );
+
+  const onScrollToIndexFailed = (info: { index: number, highestMeasuredFrameIndex: number, averageItemLength: number }) => {
+    const wait = new Promise(resolve => setTimeout(resolve, 500));
+    wait.then(() => {
+      flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+    });
+  };
+
   return (
     <SafeAreaView>
       <Container>
@@ -89,7 +100,7 @@ function App(): React.JSX.Element {
           />
           <SearchHelperView>
             <SearchHelperButton title="이전" onPress={handlePrevBtn} />
-            <SearchHelperText>{currentIndex} / {maxIndex}</SearchHelperText>
+            <SearchHelperText>{maxIndex === 0 ? 0 : currentIndex + 1} / {maxIndex}</SearchHelperText>
             <SearchHelperButton title="다음" onPress={handleNextBtn} />
           </SearchHelperView>
         </SearchView>
@@ -99,6 +110,8 @@ function App(): React.JSX.Element {
             data={DATA}
             renderItem={renderItem}
             keyExtractor={(item, index) => index.toString()}
+            getItemLayout={getItemLayout}
+            onScrollToIndexFailed={onScrollToIndexFailed}
           />
         </ContentView>
       </Container>
